@@ -28,5 +28,5 @@ define('TABLE_HEADING_CUSTOMER_NAME', 'Customer Name');
 define('TABLE_HEADING_PURCHASED', 'Purchased');
 define('TABLE_HEADING_TOTAL_COST', 'Total Cost ($)');
 define('TABLE_HEADING_TOTAL_PROFIT', 'Total Profit ($)');
+define('TABLE_HEADING_TOTAL_SHIPPING', 'Total Shipping ($)');
  	 
-?>

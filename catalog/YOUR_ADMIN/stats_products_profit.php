@@ -65,7 +65,7 @@ require('includes/application_top.php');
           </ul> */
         ?>
 
-        <DIV id="tabcontentcontainer">
+        <div id="tabcontentcontainer">
 
             <div id="sc1" class="tabcontent">
                 <table border="0" width="100%" cellspacing="2" cellpadding="2">
@@ -81,6 +81,44 @@ require('includes/application_top.php');
                                         </table></td>
                                 </tr>
                                 <tr>
+                                    <td>
+                                        <table border="0" width="100%" cellspacing="0" cellpadding="2">
+                                            <?php
+                                            $where_statement = '';
+                                            $from_string = '';
+                                            $to_string = '';
+                                            if (isset($_GET['from']) && isset($_GET['to'])) {
+                                                $from_date = zen_db_prepare_input($_GET['from']);
+                                                $to_date = zen_db_prepare_input($_GET['to']);
+                                                $from_string = strtotime($from_date);
+                                                $to_string = strtotime($to_date);
+
+                                                $date_from = date('Y-m-d', $from_string);
+                                                $date_to = date('Y-m-d', $to_string);
+                                                $where_statement = ' WHERE ';
+                                                $where_statement .= "  o.date_purchased >= '" . $date_from . "'  ";
+                                                $where_statement .= " AND o.date_purchased <= '" . $date_to . "'  ";
+                                            }
+                                            ?>
+
+                                            <tr>
+                                                <td class="smallText" valign="top"></td>
+                                                <td class="smallText" align="right">
+                                                    <?php
+                                                    echo '<b>Refine</b>';
+                                                    echo zen_draw_form($name, FILENAME_REPORTS_PROFIT_MARGIN . '.php', '', 'get', 'zen_draw_input_field', 'true');
+                                                    echo ' From: ' . zen_draw_input_field('from', $from_date);
+                                                    echo ' To: ' . zen_draw_input_field('to', $to_date);
+                                                    echo zen_draw_input_field('submit', 'Refine Results', '', false, 'submit');
+                                                    echo '</form>';
+                                                    ?>
+                                                    &nbsp;</td>
+                                            </tr>
+
+                                        </table>
+                                    </td>
+                                </tr>
+                                <tr>
                                     <td><table border="0" width="100%" cellspacing="0" cellpadding="0">
                                             <tr>
                                                 <td valign="top"><table border="0" width="100%" cellspacing="0" cellpadding="2">
@@ -88,34 +126,33 @@ require('includes/application_top.php');
                                                             <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_NUMBER; ?></td>
                                                             <td class="dataTableHeadingContent"><?php echo TABLE_HEADING_PRODUCTS; ?></td>
                                                             <td class="dataTableHeadingContent" align="right"><?php echo TABLE_HEADING_PURCHASED; ?></td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo TABLE_HEADING_PURCHASED; ?></td>
                                                             <td class="dataTableHeadingContent" align="right"><?php echo TABLE_HEADING_TOTAL_COST; ?></td>
                                                             <td class="dataTableHeadingContent" align="right"><?php echo TABLE_HEADING_TOTAL_PROFIT; ?>&nbsp;</td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo TABLE_HEADING_TOTAL_SHIPPING; ?>&nbsp;</td>
 
 
                                                         </tr>
                                                         <?php
+                                                        $max_page_results = PROFIT_MARGIN_REPORT_NUM_ROWS;
                                                         if (isset($_GET['page']) && ($_GET['page'] > 1))
-                                                            $rows = $_GET['page'] * MAX_DISPLAY_SEARCH_RESULTS_REPORTS - MAX_DISPLAY_SEARCH_RESULTS_REPORTS;
+                                                            $rows = $_GET['page'] * $max_page_results - $max_page_results;
 // The new query uses real order info from the orders_products table, and is theoretically more accurate.
 // To use this newer query, remove the "1" from the following line ($products_query_raw1 becomes $products_query_raw )
-                                                        $products_query_raw = "select 
-		SUM(op.products_quantity) as products_ordered, op.products_name, 
-		p.products_price,p.products_cost, op.products_id, 
-		SUM(p.products_cost * op.products_quantity) AS total_cost,
-		(SUM(op.products_price) - SUM(p.products_cost)) AS total_profit
-	 FROM " . TABLE_ORDERS_PRODUCTS . " op
-     LEFT JOIN " . TABLE_PRODUCTS . " p
-     ON (p.products_id = op.products_id )
-     GROUP BY p.products_id
-     ORDER BY products_ordered DESC, products_name";
+
+                                                        $products_query_raw = "SELECT op.products_id, op.products_name, SUM(op.products_quantity) AS products_ordered, SUM(op.products_cost * op.products_quantity) AS total_cost, sum(op.final_price * op.products_quantity) AS total_final_price, sum(o.orders_ot_shipping) AS ot_shipping FROM " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON (op.orders_id = o.orders_id) JOIN " . TABLE_ORDERS_TOTAL . " ot ON (o.orders_id = ot.orders_id) " . $where_statement . " GROUP BY products_id  ORDER BY products_ordered DESC, products_name";
 
 
                                                         $products_query_numrows = '';
-                                                        $products_split = new splitPageResults($_GET['page'], MAX_DISPLAY_SEARCH_RESULTS_REPORTS, $products_query_raw, $products_query_numrows);
+                                                        $products_split = new splitPageResults($_GET['page'], $max_page_results, $products_query_raw, $products_query_numrows);
 
                                                         $rows = 0;
                                                         $products = $db->Execute($products_query_raw);
-
+                                                        $product_qty_purchase = (int) 0;
+                                                        $total_products_purchased = (float) 0.00;
+                                                        $total_cost = (float) 0.00;
+                                                        $total_profit = (float) 0.00;
+                                                        $total_shipping = (float)0.00;
 
                                                         while (!$products->EOF) {
                                                             $rows++;
@@ -124,21 +161,38 @@ require('includes/application_top.php');
                                                                 $rows = '0' . $rows;
                                                             }
                                                             $cPath = zen_get_product_path($products->fields['products_id']);
+                                                            $products_profit = $products->fields['total_final_price'] - $products->fields['total_cost'];
                                                             ?>
 
                                                             <tr class="dataTableRow" onmouseover="rowOverEffect(this)" onmouseout="rowOutEffect(this)" onclick="document.location.href = '<?php echo zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $cPath . '&pID=' . $products->fields['products_id'] . '&page='); ?>'">
                                                                 <td class="dataTableContent" align="right"><?php echo $products->fields['products_id']; ?>&nbsp;&nbsp;</td>
                                                                 <td class="dataTableContent"><?php echo '<a href="' . zen_href_link(FILENAME_CATEGORIES, 'cPath=' . $cPath . '&pID=' . $products->fields['products_id'] . '&page=') . '">' . $products->fields['products_name'] . '</a>'; ?></td>
                                                                 <td class="dataTableContent" align="right"><?php echo $products->fields['products_ordered']; ?>&nbsp;</td>
+                                                                <td class="dataTableContent" align="right"><?php echo number_format($products->fields['total_final_price'], 2); ?>&nbsp;</td>
                                                                 <td class="dataTableContent" align="right"><?php echo number_format($products->fields['total_cost'], 2); ?>&nbsp;</td>
-                                                                <td class="dataTableContent" align="right"><?php echo number_format($products->fields['total_profit'], 2); ?>&nbsp;</td>
-
+                                                                <td class="dataTableContent" align="right"><?php echo number_format($products_profit, 2); ?>&nbsp;</td>
+                                                                <td class="dataTableContent" align="right"><?php echo number_format($products->fields['ot_shipping'], 2); ?>&nbsp;</td>
+                                                                
                                                             </tr>
                                                             <?php
+                                                            $product_qty_purchase = $product_qty_purchase + (int) $products->fields['products_ordered'];
+                                                            $total_products_purchased = $total_products_purchased + $products->fields['total_final_price'];
+                                                            $total_cost = $total_cost + $products->fields['total_cost'];
+                                                            $total_profit = $total_profit + $products_profit;
+                                                            $total_shipping = $total_shipping + $products->fields['ot_shipping'];
                                                             $products->MoveNext();
                                                         }
                                                         ?>
+                                                        <tr class="dataTableHeadingRow">
+                                                            <td class="dataTableHeadingContent">Total</td>
+                                                            <td class="dataTableHeadingContent"></td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo number_format($product_qty_purchase); ?></td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo number_format($total_products_purchased, 2); ?></td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo number_format($total_cost, 2); ?></td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo number_format($total_profit, 2); ?></td>
+                                                            <td class="dataTableHeadingContent" align="right"><?php echo number_format($total_shipping, 2); ?>&nbsp;</td>
 
+                                                        </tr>
 
                                                     </table></td>
                                             </tr>
@@ -146,12 +200,13 @@ require('includes/application_top.php');
                                             <tr>
                                                 <td colspan="3"><table border="0" width="100%" cellspacing="0" cellpadding="2">
                                                         <tr>
-                                                            <td class="smallText" valign="top"><?php echo $products_split->display_count($products_query_numrows, MAX_DISPLAY_SEARCH_RESULTS_REPORTS, $_GET['page'], TEXT_DISPLAY_NUMBER_OF_PRODUCTS); ?></td>
-                                                            <td class="smallText" align="right"><?php echo $products_split->display_links($products_query_numrows, MAX_DISPLAY_SEARCH_RESULTS_REPORTS, MAX_DISPLAY_PAGE_LINKS, $_GET['page']); ?>&nbsp;</td>
+                                                            <td class="smallText" valign="top"><?php echo $products_split->display_count($products_query_numrows, $max_page_results, $_GET['page'], TEXT_DISPLAY_NUMBER_OF_PRODUCTS); ?></td>
+                                                            <td class="smallText" align="right"><?php echo $products_split->display_links($products_query_numrows, $max_page_results, MAX_DISPLAY_PAGE_LINKS, $_GET['page']); ?>&nbsp;</td>
                                                         </tr>
                                                     </table>
                                                 </td>
                                             </tr>
+
                                         </table></td>
                                 </tr>
                             </table></td>
@@ -160,7 +215,7 @@ require('includes/application_top.php');
                 </table>
             </div>
 
-        </DIV>
+        </div>
 
         <!-- body_eof //-->
 
