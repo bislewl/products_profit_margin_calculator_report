@@ -21,6 +21,26 @@
 //
 
 require('includes/application_top.php');
+
+//@todo add check to see if there are orders that need updating
+$action = zen_db_prepare_input($_GET['action']);
+if($action == "update_old_orders")
+{
+    // orders_products without cost values
+    $orders_products_update = $db->Execute("SELECT * FROM ".TABLE_ORDERS_PRODUCTS." WHERE products_cost='0' ");
+    while(!$orders_products_update->EOF){
+        $product_query = $db->Execute("SELECT * FROM ".TABLE_PRODUCTS." WHERE products_id='".$orders_products_update->fields['products_id']."'");
+        $products_cost = $product_query->fields['products_cost'];
+        $db->Execute("UPDATE ".TABLE_ORDERS_PRODUCTS." SET products_cost='".$products_cost."' WHERE orders_products_id='".$orders_products_update->fields['orders_products_id']."'");
+        $orders_products_update->MoveNext();
+    }
+    $orders_update = $db->Execute("SELECT * FROM ".TABLE_ORDERS." WHERE orders_ot_shipping='0'");
+    while(!$orders_update->EOF){
+        $ot_shipping = $db->Execute("SELECT value FROM ".TABLE_ORDERS_TOTAL." WHERE orders_id = '".$orders_update->fields['orders_id']."' AND class='ot_shipping'");
+        $db->Execute("UPDATE ".TABLE_ORDERS." SET orders_ot_shipping='".$ot_shipping->fields['value']."' WHERE orders_id='".$orders_update->fields['orders_id']."'");
+        $orders_update->MoveNext();
+    }
+}
 ?>
 <!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
