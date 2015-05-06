@@ -10,7 +10,7 @@ if (!defined('IS_ADMIN_FLAG')) {
     die('Illegal Access');
 }
 
-$module_constant = 'PROFIT_MARGIN_REPOR_VERSION'; // This should be a UNIQUE name followed by _VERSION for convention
+$module_constant = 'PROFIT_MARGIN_REPORT_VERSION'; // This should be a UNIQUE name followed by _VERSION for convention
 $module_installer_directory = DIR_FS_ADMIN . 'includes/installers/profit_margin_report'; // This is the directory your installer is in, usually this is lower case
 $module_name = "Profit Margin Report"; // This should be a plain English or Other in a user friendly way
 $zencart_com_plugin_id = 175; // from zencart.com plugins - Leave Zero not to check
