@@ -37,7 +37,7 @@
                         $.each(data.releases, function (i, release) {
                             $('#versionList').append('<li>' + release.date + ' ' + release.version + ' ' + release.user + ' - ' + release.description + '</li>');
                         });
-                        $('#donate').append('<input type="hidden" name="item_name" value="Contribution to the ZenCart Community for '+data.moduleName+' Module">');
+                       $('#donate input[name="item_name"]').val('Contribution to the ZenCart Community for '+data.moduleName);
             });
 
         </script>
