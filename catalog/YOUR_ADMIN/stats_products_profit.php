@@ -160,7 +160,7 @@ if($action == "update_old_orders")
 // The new query uses real order info from the orders_products table, and is theoretically more accurate.
 // To use this newer query, remove the "1" from the following line ($products_query_raw1 becomes $products_query_raw )
 
-                                                        $products_query_raw = "SELECT op.products_id, op.products_name, SUM(op.products_quantity) AS products_ordered, SUM(op.products_cost * op.products_quantity) AS total_cost, sum(op.final_price * op.products_quantity) AS total_final_price, sum(o.orders_ot_shipping) AS ot_shipping FROM " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON (op.orders_id = o.orders_id) JOIN " . TABLE_ORDERS_TOTAL . " ot ON (o.orders_id = ot.orders_id) " . $where_statement . " GROUP BY products_id  ORDER BY products_ordered DESC, products_name";
+                                                        $products_query_raw = "SELECT op.products_id, op.products_name, SUM(op.products_quantity) AS products_ordered, SUM(o.orders_ot_shipping) AS ot_shipping, SUM(op.products_cost * op.products_quantity) AS total_cost, sum(op.final_price * op.products_quantity) AS total_final_price FROM " . TABLE_ORDERS . " o JOIN " . TABLE_ORDERS_PRODUCTS . " op ON (op.orders_id = o.orders_id) " . $where_statement . " GROUP BY products_id  ORDER BY products_ordered DESC, products_name";
 
 
                                                         $products_query_numrows = '';
@@ -176,7 +176,6 @@ if($action == "update_old_orders")
 
                                                         while (!$products->EOF) {
                                                             $rows++;
-
                                                             if (strlen($rows) < 2) {
                                                                 $rows = '0' . $rows;
                                                             }
