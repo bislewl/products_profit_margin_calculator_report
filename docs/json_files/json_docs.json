@@ -23,6 +23,10 @@
                  {"date" : "05/06/2015",
                     "version" : "2.2.2",
                     "description" : "Fixed bug in version key, improved docs",
+                    "user" : "PRO-Webs.net"},
+                 {"date" : "05/18/2015",
+                    "version" : "2.2.3",
+                    "description" : "Fixed bug in calculating of ot_shipping and total products sold",
                     "user" : "PRO-Webs.net"}
         ],
         "featuresHeading" : "Profit Margin Report Module for Zen Cart 1.5.4 Features",
