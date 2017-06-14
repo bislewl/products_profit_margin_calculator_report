@@ -23,7 +23,7 @@ class reportProductsProfitPurchase extends base {
             $db->Execute("UPDATE ".TABLE_ORDERS_PRODUCTS." SET products_cost='".$products_cost."' WHERE orders_products_id='".$rpp_orders_products->fields['orders_products_id']."'");
             $rpp_orders_products->MoveNext();
         }
-        $ot_shipping = $db->Execute("SELECT value FROM ".TABLE_ORDERS_TOTALS." WHERE orders_id = '".$rpp_orders_id."' AND class='ot_shipping'");
+        $ot_shipping = $db->Execute("SELECT value FROM ".TABLE_ORDERS_TOTAL." WHERE orders_id = '".$rpp_orders_id."' AND class='ot_shipping'");
         $db->Execute("UPDATE ".TABLE_ORDERS." SET orders_ot_shipping='".$ot_shipping->fields['value']."' WHERE orders_id='".$rpp_orders_id."'");
     }
 }
